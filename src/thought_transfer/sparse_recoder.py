@@ -1,15 +1,19 @@
 import torch as t
+from torch.nn.init import kaiming_normal_
 
 
 # sanity check: without topk easily overfits on id data
-
 class SparseRecoder(t.nn.Module):
     def __init__(self, d_in, d_out, d_hidden, k=5, add_topk=True):
         super(SparseRecoder, self).__init__()
+        self.config = {'d_in': d_in, 'd_out': d_out, 'd_hidden': d_hidden, 'k': k, 'add_topk': add_topk}
         self.encoder = t.nn.Linear(d_in, d_hidden)
         self.decoder = t.nn.Linear(d_hidden, d_out)
         self.k = k
         self.add_topk = add_topk
+
+        kaiming_normal_(self.encoder.weight, nonlinearity='relu')
+        kaiming_normal_(self.decoder.weight)
 
     def encode(self, x):
         encoded = self.encoder(x)

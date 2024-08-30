@@ -1,7 +1,9 @@
+import sys
 import argparse
 from io import BytesIO
 from datetime import datetime
 from itertools import chain
+from pathlib import Path
 
 import wandb
 import numpy as np
@@ -9,6 +11,7 @@ import webdataset as wds
 import torch as t
 from tqdm import tqdm
 
+sys.path.append(Path(__file__).resolve().parent.as_posix())
 from sparse_recoder import SparseRecoder
 
 
@@ -94,7 +97,7 @@ def main(args):
     prev_i = 0
     pbar = tqdm(total=args.num_samples)
     for i, (batch_in, batch_out) in batch_iter:
-        features, recons = model(batch_in)
+        recons = model(batch_in)
         loss = t.nn.functional.mse_loss(recons, batch_out)
         wandb.log({'loss': loss.item()})
         loss.backward()
