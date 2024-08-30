@@ -5,7 +5,7 @@
 
 # Variables used by the entrypoint script
 # Change this to the path of your project (can be the /dev or /run copy)
-export PROJECT_ROOT_AT=$SCRATCH/template-project-name/dev
+export PROJECT_ROOT_AT=$SCRATCH/thought-transfer/dev
 export SLURM_ONE_ENTRYPOINT_SCRIPT_PER_NODE=1
 
 # Enroot + Pyxis
@@ -13,7 +13,7 @@ export SLURM_ONE_ENTRYPOINT_SCRIPT_PER_NODE=1
 srun \
   -G 1 --partition h100 -J template-minimal \
   --pty \
-  --container-image=$CONTAINER_IMAGES/claire+moalla+template-project-name+amd64-cuda-root-latest.sqsh \
+  --container-image=$CONTAINER_IMAGES/claire+moalla+thought-transfer+amd64-cuda-root-latest.sqsh \
   --container-mounts=$SCRATCH:$SCRATCH \
   --container-workdir=$PROJECT_ROOT_AT \
   --no-container-mount-home \
@@ -40,5 +40,5 @@ srun \
   --no-home \
   --nv \
   --writable-tmpfs \
-  $CONTAINER_IMAGES/template-project-name_amd64-cuda-root-latest.sif \
+  $CONTAINER_IMAGES/thought-transfer_amd64-cuda-root-latest.sif \
   bash

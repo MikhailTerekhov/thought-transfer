@@ -1,4 +1,4 @@
-name: template-project-name
+name: thought-transfer
 channels:
   - conda-forge
 dependencies:
