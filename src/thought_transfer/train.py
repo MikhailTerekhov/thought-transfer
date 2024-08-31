@@ -37,7 +37,7 @@ def get_input_output(resid1, resid2, mode):
     return data_in, data_out
 
 
-def fix_batch_iter(dataset_iter, batch_size, mode):
+def fix_batch_iter(dataset_iter, batch_size, mode, drop_1):
     batch_in = []
     batch_out = []
     cum_size = 0
@@ -48,6 +48,9 @@ def fix_batch_iter(dataset_iter, batch_size, mode):
         # first dim is 1
         data_in = t.tensor(data_in[0], device='cuda')
         data_out = t.tensor(data_out[0], device='cuda')
+        if drop_1:
+            data_in = data_in[1:]
+            data_out = data_out[1:]
         batch_in.append(data_in)
         batch_out.append(data_out)
         num_processed += 1
@@ -84,20 +87,20 @@ def main(args):
     data_in, data_out = get_input_output(resid1, resid2, args.mode)
     dim_in = data_in.shape[-1]
     dim_out = data_out.shape[-1]
-    dim_hidden = max(dim_in, dim_out) * args.expansion
+    dim_hidden = int(max(dim_in, dim_out) * args.expansion)
 
     print(f"dim_in: {dim_in}, dim_out: {dim_out}, dim_hidden: {dim_hidden}")
     print(text)
 
-    model = SparseRecoder(d_in=dim_in, d_out=dim_out, d_hidden=dim_hidden)
+    model = SparseRecoder(d_in=dim_in, d_out=dim_out, d_hidden=dim_hidden, k=args.sae_k)
     model = model.cuda()
     optimizer = t.optim.Adam(model.parameters(), lr=args.lr)
 
-    batch_iter = fix_batch_iter(dataset_iter, args.batch_size, args.mode)
+    batch_iter = fix_batch_iter(dataset_iter, args.batch_size, args.mode, args.drop_1)
     prev_i = 0
     pbar = tqdm(total=args.num_samples)
     for i, (batch_in, batch_out) in batch_iter:
-        recons = model(batch_in)
+        enc, recons = model(batch_in)
         loss = t.nn.functional.mse_loss(recons, batch_out)
         wandb.log({'loss': loss.item()})
         loss.backward()
@@ -112,10 +115,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Sparse Recoder')
     parser.add_argument('data', type=str, nargs='+', help='dataset path')
     parser.add_argument('--expansion', type=float, default=8, help='expansion factor')
+    parser.add_argument('--sae_k', type=int, default=3)
     parser.add_argument('--num_samples', type=int, default=None, help='number of samples (only for time est)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--batch_size', type=int, default=256, help='batch size')
     parser.add_argument('--mode', type=str, default='sae1', choices=['sae1', 'sae2', 'translate'])
+    parser.add_argument('--drop_1', action='store_true', help='drop the first embedding (of the BOS token)')
     args = parser.parse_args()
 
     main(args)

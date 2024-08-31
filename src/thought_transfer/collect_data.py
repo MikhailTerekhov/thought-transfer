@@ -19,6 +19,7 @@ cached_value = None
 
 def cache_it(resid, hook):
     global cached_value
+    # cached_value = t.clone(resid.detach())
     cached_value = resid.detach()
     # print(hook)
     return resid
@@ -40,7 +41,9 @@ def main(args):
     nltk.download('punkt')
     nltk.download('punkt_tab')
 
-    wiki = datasets.load_dataset("wikipedia", "20220301.en")
+    data_dir = Path(args.save)
+    wiki = datasets.load_dataset("wikipedia", "20220301.en",
+                                 cache_dir=(data_dir.parent / "cache").as_posix())
 
     inds = np.load("../data/wiki_split.npz")
     train_inds = inds["train_inds"]
@@ -89,6 +92,9 @@ def main(args):
             model2.run_with_hooks(chunk, return_type="loss", fwd_hooks=[(hook2, cache_it)])
             resid2 = cached_value.detach().cpu().numpy()
             print(f"{ii} opt", file=log_file, flush=True)
+
+            print(f"res sum: {np.sum(resid1)}, {np.sum(resid2)}")
+
 
             # print(resid_gpt2.shape, resid_opt.shape)
 
