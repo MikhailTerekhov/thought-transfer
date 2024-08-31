@@ -4,6 +4,7 @@ from io import BytesIO
 from datetime import datetime
 from itertools import chain
 from pathlib import Path
+import json
 
 import wandb
 import numpy as np
@@ -109,6 +110,12 @@ def main(args):
 
         pbar.update(i - prev_i)
         prev_i = i
+
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    model_id = f"{args.mode}_{timestamp}"
+    folder = Path(args.data[0]).parents[1] / 'outputs/models'
+    json.dump(model.config, open(folder / f'{model_id}.json', 'w'))
+    t.save(model.state_dict(), folder / f'{model_id}.pth')
 
 
 if __name__ == '__main__':
